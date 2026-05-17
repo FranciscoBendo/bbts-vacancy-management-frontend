@@ -274,7 +274,7 @@ export default function CandidatesByVacancyPage() {
                 </Box>
               </Box>
             )}
-            {!selected.explanation.locationMatch && (
+            {selected.explanation.locationMatch === false && (
   <Box mt={2} sx={{ bgcolor: 'warning.light', borderRadius: 2, p: 1.5 }}>
     <Typography variant="caption" color="warning.dark" fontWeight={600}>
       ⚠️ Candidato fora da localização da vaga (-10% no score)

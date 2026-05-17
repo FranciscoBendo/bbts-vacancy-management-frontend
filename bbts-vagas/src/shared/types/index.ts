@@ -6,7 +6,7 @@ export interface Vacancy { id: string; title: string; description: string; locat
 export type RequirementType = 'SKILL' | 'LANGUAGE' | 'CERTIFICATION' | 'EDUCATION' | 'COMPANY' | 'LOCATION';
 export interface Requirement { id: string; vacancyId: string; type: RequirementType; name: string; weight: number; mandatory: boolean; }
 export interface ApprovalDecision { vacancyId: string; decision: 'APPROVED' | 'REJECTED'; justification?: string; decidedAt: string; }
-export interface CandidateExplanation { metRequirements: number; totalRequirements: number; missingMandatory: string[]; strengths: string[]; locationMatch?: boolean;}
+export interface CandidateExplanation { metRequirements: number; totalRequirements: number; missingMandatory: string[]; strengths: string[]; locationMatch: boolean;}
 export interface CandidateMatch { candidateId: string; fullName: string; headline: string; location: string; score: number; explanation: CandidateExplanation; }
 export interface CandidateSkill { id: string; name: string; level?: string; yearsExperience?: number; }
 export interface CandidateExperience { id: string; company: string; role: string; startYear?: number; endYear?: number; current: boolean; }
