@@ -26,7 +26,7 @@ export interface CandidateListItem {
   skillsSummary: string[];
   createdAt: string;
 }
-// ADICIONADO
+
 export interface CandidateListByVacancy {
   candidates: CandidateMatch[];
   totalBeforeFilter: number;

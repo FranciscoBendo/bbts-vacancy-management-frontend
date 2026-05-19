@@ -40,14 +40,10 @@ function ScoreBar({ score }: { score: number }) {
 export default function CandidatesByVacancyPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  //ADICIONADO
   const { data, isLoading, isError } = useCandidatesByVacancy(id!);
   const candidates = data?.candidates ?? [];
   const totalBeforeFilter = data?.totalBeforeFilter ?? 0;  
-  //ADICIONADO
   const [selected, setSelected] = useState<CandidateMatch | null>(null);
-
-  // ADICIONAR estas duas linhas
   const { mutate: rescore, isPending: isRescoring } = useRescoreVacancy(id!);
 
   return (
