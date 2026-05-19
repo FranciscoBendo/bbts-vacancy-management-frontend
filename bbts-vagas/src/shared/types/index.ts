@@ -26,3 +26,9 @@ export interface CandidateListItem {
   skillsSummary: string[];
   createdAt: string;
 }
+
+export interface CandidateListByVacancy {
+  candidates: CandidateMatch[];
+  totalBeforeFilter: number;
+  scoreThreshold: number;
+}

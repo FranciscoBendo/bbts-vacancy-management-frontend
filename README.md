@@ -86,14 +86,14 @@ src/
 │   │       ├── useApproveVacancy.ts
 │   │       └── useRejectVacancy.ts
 │   ├── candidates/
-│   │   ├── CandidatesByVacancyPage.tsx  # Ranking por vaga + botão Atualizar Ranking
+│   │   ├── CandidatesByVacancyPage.tsx  # Ranking filtrado por score mínimo + Atualizar Ranking
 │   │   ├── CandidatesListPage.tsx       # Base de candidatos + filtros (Sprint 3)
 │   │   ├── CandidateDetailPage.tsx      # Perfil completo (Sprint 3)
 │   │   └── hooks/
-│   │       ├── useCandidatesByVacancy.ts
-│   │       ├── useRescoreVacancy.ts     # Recalculo de ranking sob demanda
-│   │       ├── useCandidates.ts         # Sprint 3
-│   │       └── useCandidateDetail.ts    # Sprint 3
+│   │       ├── useCandidatesByVacancy.ts  # Retorna candidates, totalBeforeFilter e scoreThreshold
+│   │       ├── useRescoreVacancy.ts       # Recálculo de ranking sob demanda
+│   │       ├── useCandidates.ts           # Sprint 3
+│   │       └── useCandidateDetail.ts      # Sprint 3
 │   └── imports/
 │       ├── ImportCandidatesPage.tsx     # PDF (IA) + CSV + JSON
 │       ├── useImportPdf.ts              # Sprint 3
@@ -103,7 +103,7 @@ src/
 │   │   ├── http.ts          # Cliente HTTP + toCamel + auth header
 │   │   └── endpoints.ts     # Todas as URLs da API
 │   ├── types/
-│   │   └── index.ts         # Todos os tipos TypeScript do domínio
+│   │   └── index.ts         # Todos os tipos TypeScript do domínio, incluindo CandidateListByVacancy
 │   ├── components/          # AppButton, AppDialog, AppPage, AppSection...
 │   ├── layouts/             # AppShell, SideNav, TopBar
 │   └── utils/
@@ -120,7 +120,7 @@ src/
 | `/vacancies` | Lista de vagas | REQUESTER (só suas) / RH (todas) |
 | `/vacancies/new` | Criar nova vaga | REQUESTER |
 | `/vacancies/:id` | Detalhe + submeter para aprovação | Todos |
-| `/vacancies/:id/candidates` | Ranking de candidatos por vaga + Atualizar Ranking | Todos |
+| `/vacancies/:id/candidates` | Ranking filtrado por score mínimo + Atualizar Ranking | Todos |
 | `/candidates` | Base de candidatos com filtros por skill e localização | Todos |
 | `/candidates/:id` | Perfil completo do candidato | Todos |
 | `/approvals` | Fila de aprovação | RH |
@@ -151,11 +151,22 @@ O fluxo de upload PDF funciona assim:
 
 ---
 
-## Ranking de candidatos e Atualizar Ranking
+## Ranking de candidatos, Atualizar Ranking e Filtro de Score Mínimo
 
 O score de cada candidato é calculado automaticamente quando uma vaga é aprovada. Para recalcular o ranking após a importação de novos candidatos, utilize o botão **Atualizar Ranking** disponível na tela `/vacancies/:id/candidates`.
 
 O botão aciona `POST /vacancies/:id/rescore` no backend, que apaga as sugestões existentes e recalcula o score para todos os candidatos cadastrados. A tabela é atualizada automaticamente ao término da operação.
+
+### Filtro de score mínimo
+
+O ranking exibe apenas candidatos com score maior ou igual a **30%**. Candidatos abaixo desse limiar são ocultados automaticamente. A tela distingue dois cenários de lista vazia:
+
+| Situação | Mensagem exibida |
+|---|---|
+| Vaga sem candidatos cadastrados | "Nenhum candidato encontrado para esta vaga." |
+| Candidatos existem mas nenhum alcança 30% | "Nenhum candidato alcança o mínimo de 30% de score." |
+
+Essa distinção é possível porque o hook `useCandidatesByVacancy` expõe o campo `totalBeforeFilter` retornado pelo backend — se for maior que zero com lista vazia, significa que o filtro excluiu todos os candidatos.
 
 ---
 

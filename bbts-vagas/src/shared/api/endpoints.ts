@@ -1,8 +1,11 @@
 export const ENDPOINTS = {
-  LOGIN: '/auth/login', ME: '/auth/me',
+  LOGIN: '/auth/login',
+  REGISTER: '/auth/register',
+  ME: '/auth/me',
   VACANCIES: '/vacancies',
   VACANCY: (id: string) => `/vacancies/${id}`,
   SUBMIT_VACANCY: (id: string) => `/vacancies/${id}/submit`,
+  RESCORE_VACANCY: (id: string) => `/vacancies/${id}/rescore`,
   APPROVALS_PENDING: '/approvals/pending',
   APPROVE: (id: string) => `/approvals/${id}/approve`,
   REJECT: (id: string) => `/approvals/${id}/reject`,
@@ -13,5 +16,4 @@ export const ENDPOINTS = {
   IMPORT_CSV: '/candidates/import/csv',
   IMPORT_PDF: '/candidates/import/pdf',
   IMPORT_TEMPLATE: '/candidates/import/template',
-  RESCORE_VACANCY: (id: string) => `/vacancies/${id}/rescore`,  // ← NOVO
 } as const;

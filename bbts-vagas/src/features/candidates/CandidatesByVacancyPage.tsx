@@ -40,7 +40,9 @@ function ScoreBar({ score }: { score: number }) {
 export default function CandidatesByVacancyPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: candidates, isLoading, isError } = useCandidatesByVacancy(id!);
+  const { data, isLoading, isError } = useCandidatesByVacancy(id!);
+  const candidates = data?.candidates ?? [];
+  const totalBeforeFilter = data?.totalBeforeFilter ?? 0;  
   const [selected, setSelected] = useState<CandidateMatch | null>(null);
 
   // ADICIONAR estas duas linhas
@@ -90,12 +92,16 @@ export default function CandidatesByVacancyPage() {
               <Skeleton key={i} height={52} sx={{ mb: 1 }} />
             ))}
           </Box>
-        ) : !candidates || candidates.length === 0 ? (
-          <Box textAlign="center" py={8}>
-            <Typography variant="h6" color="text.secondary">
-              Nenhum candidato encontrado para esta vaga
-            </Typography>
-          </Box>
+        ) : candidates.length === 0 ? (
+  <Box textAlign="center" py={8}>
+    <Typography variant="h6" color="text.secondary">
+      {totalBeforeFilter > 0
+        // Existem candidatos mas todos ficaram abaixo do limiar
+        ? 'Nenhum candidato alcança o mínimo de 30% de score.'
+        // A vaga genuinamente não tem candidatos cadastrados
+        : 'Nenhum candidato encontrado para esta vaga.'}
+    </Typography>
+  </Box>
         ) : (
           <Table>
             <TableHead>
