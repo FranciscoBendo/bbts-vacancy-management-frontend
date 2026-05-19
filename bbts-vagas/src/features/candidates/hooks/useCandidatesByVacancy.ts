@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { http } from '../../../shared/api/http';
 import { ENDPOINTS } from '../../../shared/api/endpoints';
-import { CandidateExplanation, CandidateMatch } from '../../../shared/types';
+import { CandidateMatch, CandidateExplanation } from '../../../shared/types';
 
 interface __BackendCandidate__ {
   id: number; vacancyId: number; candidateId: number;

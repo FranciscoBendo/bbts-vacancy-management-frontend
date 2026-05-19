@@ -44,8 +44,6 @@ export default function CandidatesByVacancyPage() {
   const candidates = data?.candidates ?? [];
   const totalBeforeFilter = data?.totalBeforeFilter ?? 0;  
   const [selected, setSelected] = useState<CandidateMatch | null>(null);
-
-  // ADICIONAR estas duas linhas
   const { mutate: rescore, isPending: isRescoring } = useRescoreVacancy(id!);
 
   return (
