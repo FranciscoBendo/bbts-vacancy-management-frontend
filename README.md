@@ -7,36 +7,27 @@ Stack: **React · TypeScript · Vite · Material UI · TanStack Query**
 
 ## Pré-requisitos
 
-- Node.js 18 ou superior → [nodejs.org](https://nodejs.org) (recomendo versão LTS)
+- Node.js 18+ → [nodejs.org](https://nodejs.org)
 - npm — já vem com o Node
 - Backend rodando em `http://localhost:8000`
-
-```bash
-node -v
-npm -v
-```
 
 ---
 
 ## Instalação e execução
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/FMello-Dev/bbts-vacancy-management-frontend.git
 cd bbts-vacancy-management-frontend/bbts-vagas
-
-# 2. Instalar dependências
 npm install
-
-# 3. Registrar o Service Worker do MSW
 npx msw init public/ --save
+```
 
-# 4. Configurar variáveis de ambiente
-# Crie o arquivo .env na raiz de bbts-vagas/
+Crie o `.env`:
+```env
 VITE_API_URL=http://localhost:8000
 VITE_USE_MOCK=false
+```
 
-# 5. Rodar
+```bash
 npm run dev
 ```
 
@@ -46,10 +37,10 @@ Acesse: **http://localhost:5173**
 
 ## Variáveis de ambiente
 
-| Variável | Valor padrão | Descrição |
-|----------|-------------|-----------|
-| `VITE_API_URL` | `http://localhost:8000` | URL do backend |
-| `VITE_USE_MOCK` | `false` | `true` para usar dados mockados sem backend |
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_API_URL` | URL do backend (ex: `http://localhost:8000`) |
+| `VITE_USE_MOCK` | `true` para usar MSW sem backend |
 
 ---
 
@@ -62,10 +53,10 @@ src/
 │   ├── router.tsx           # Rotas + guards de autenticação por role
 │   ├── providers.tsx
 │   ├── queryClient.ts
-│   └── theme.ts             # Tema MUI (cores BBTS)
+│   └── theme.ts
 ├── features/
 │   ├── auth/
-│   │   ├── LoginPage.tsx    # Seleção de perfil (REQUESTER / RH)
+│   │   ├── LoginPage.tsx    # Login + Cadastro (toggle) com email/senha
 │   │   └── authContext.tsx  # Contexto de autenticação + token
 │   ├── vacancies/
 │   │   ├── VacanciesListPage.tsx
@@ -87,27 +78,26 @@ src/
 │   │       └── useRejectVacancy.ts
 │   ├── candidates/
 │   │   ├── CandidatesByVacancyPage.tsx  # Ranking filtrado por score mínimo + Atualizar Ranking
-│   │   ├── CandidatesListPage.tsx       # Base de candidatos + filtros (Sprint 3)
-│   │   ├── CandidateDetailPage.tsx      # Perfil completo (Sprint 3)
+│   │   ├── CandidatesListPage.tsx
+│   │   ├── CandidateDetailPage.tsx
 │   │   └── hooks/
 │   │       ├── useCandidatesByVacancy.ts  # Retorna candidates, totalBeforeFilter e scoreThreshold
-│   │       ├── useRescoreVacancy.ts       # Recálculo de ranking sob demanda
-│   │       ├── useCandidates.ts           # Sprint 3
-│   │       └── useCandidateDetail.ts      # Sprint 3
+│   │       ├── useRescoreVacancy.ts
+│   │       ├── useCandidates.ts
+│   │       └── useCandidateDetail.ts
 │   └── imports/
 │       ├── ImportCandidatesPage.tsx     # PDF (IA) + CSV + JSON
-│       ├── useImportPdf.ts              # Sprint 3
+│       ├── useImportPdf.ts
 │       └── useImportCandidates.ts
 ├── shared/
 │   ├── api/
 │   │   ├── http.ts          # Cliente HTTP + toCamel + auth header
 │   │   └── endpoints.ts     # Todas as URLs da API
-│   ├── types/
-│   │   └── index.ts         # Todos os tipos TypeScript do domínio, incluindo CandidateListByVacancy
-│   ├── components/          # AppButton, AppDialog, AppPage, AppSection...
+│   ├── types/index.ts       # Todos os tipos TypeScript do domínio
+│   ├── components/
 │   ├── layouts/             # AppShell, SideNav, TopBar
 │   └── utils/
-└── mocks/                   # MSW handlers para dev sem backend
+└── mocks/
 ```
 
 ---
@@ -116,72 +106,54 @@ src/
 
 | Rota | Tela | Role |
 |------|------|------|
-| `/login` | Seleção de perfil | Todos |
+| `/login` | Login + Cadastro | Público |
 | `/vacancies` | Lista de vagas | REQUESTER (só suas) / RH (todas) |
 | `/vacancies/new` | Criar nova vaga | REQUESTER |
-| `/vacancies/:id` | Detalhe + submeter para aprovação | Todos |
-| `/vacancies/:id/candidates` | Ranking filtrado por score mínimo + Atualizar Ranking | Todos |
-| `/candidates` | Base de candidatos com filtros por skill e localização | Todos |
-| `/candidates/:id` | Perfil completo do candidato | Todos |
+| `/vacancies/:id` | Detalhe + submeter para aprovação | Autenticado |
+| `/vacancies/:id/candidates` | Ranking filtrado por score mínimo + Atualizar Ranking | Autenticado |
+| `/candidates` | Base de candidatos com filtros por skill e localização | Autenticado |
+| `/candidates/:id` | Perfil completo do candidato | Autenticado |
 | `/approvals` | Fila de aprovação | RH |
 | `/candidates/import` | Importar via PDF (IA), CSV ou JSON | RH |
 
 ---
 
-## Login
+## Autenticação
 
-| Botão | user_id | Role | Redireciona para |
-|-------|---------|------|-----------------|
-| Entrar como Solicitante | 1 | REQUESTER | `/vacancies` |
-| Entrar como RH | 2 | RH | `/approvals` |
+A tela `/login` tem dois modos alternáveis:
 
----
+**Login** — e-mail + senha  
+**Cadastro** — nome, e-mail, senha e seleção de perfil (Solicitante ou RH)
 
-## Importação de currículos via IA
-
-O fluxo de upload PDF funciona assim:
-
-1. RH acessa `/candidates/import` → aba **PDF (IA)**
-2. Faz upload do currículo `.pdf`
-3. O frontend envia para `POST /candidates/import/pdf`
-4. O backend envia o PDF para o **Groq**
-5. O **Groq (LLaMA 3.3 70B)** extrai: nome, skills, experiências, formação, idiomas, certificações
-6. Os dados são normalizados (sinônimos) e salvos no banco
-7. O frontend exibe o perfil do candidato salvo + botão "Ver perfil completo"
+Após autenticar, o token JWT é salvo no `sessionStorage` e enviado automaticamente em todas as requisições.
 
 ---
 
-## Ranking de candidatos, Atualizar Ranking e Filtro de Score Mínimo
+## Ranking de candidatos
 
-O score de cada candidato é calculado automaticamente quando uma vaga é aprovada. Para recalcular o ranking após a importação de novos candidatos, utilize o botão **Atualizar Ranking** disponível na tela `/vacancies/:id/candidates`.
+O score é calculado automaticamente quando uma vaga é aprovada pelo RH. Se novos candidatos forem importados após a aprovação, clique em **Atualizar Ranking** na tela de candidatos da vaga para recalcular.
 
-O botão aciona `POST /vacancies/:id/rescore` no backend, que apaga as sugestões existentes e recalcula o score para todos os candidatos cadastrados. A tabela é atualizada automaticamente ao término da operação.
-
-### Filtro de score mínimo
-
-O ranking exibe apenas candidatos com score maior ou igual a **30%**. Candidatos abaixo desse limiar são ocultados automaticamente. A tela distingue dois cenários de lista vazia:
+O ranking exibe apenas candidatos com score ≥ **30%**. A tela distingue dois cenários:
 
 | Situação | Mensagem exibida |
 |---|---|
 | Vaga sem candidatos cadastrados | "Nenhum candidato encontrado para esta vaga." |
 | Candidatos existem mas nenhum alcança 30% | "Nenhum candidato alcança o mínimo de 30% de score." |
 
-Essa distinção é possível porque o hook `useCandidatesByVacancy` expõe o campo `totalBeforeFilter` retornado pelo backend — se for maior que zero com lista vazia, significa que o filtro excluiu todos os candidatos.
+Penalizações aplicadas no score:
+- **-30% por requisito obrigatório ausente**
+- **-10% se o candidato não é da cidade da vaga**
 
 ---
 
-## Integração com o backend
+## Importação de currículos via IA
 
-Toda comunicação passa por `src/shared/api/http.ts`:
-
-- Adiciona `Authorization: Bearer <token>` automaticamente
-- Converte respostas de `snake_case` → `camelCase` automaticamente
-- Redireciona para `/login` em caso de 401
-
-Para rodar sem backend (modo mock):
-```env
-VITE_USE_MOCK=true
-```
+1. RH acessa `/candidates/import` → aba **PDF (IA)**
+2. Faz upload do currículo `.pdf`
+3. O backend envia para o **Groq (LLaMA 3.3 70B)**
+4. A IA extrai: nome, skills, experiências, formação, idiomas, certificações
+5. Dados são normalizados (sinônimos) e salvos no banco
+6. Candidato aparece no ranking ao clicar em **Atualizar Ranking**
 
 ---
 
