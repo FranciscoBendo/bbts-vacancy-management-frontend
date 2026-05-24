@@ -141,7 +141,7 @@ O ranking exibe apenas candidatos com score ≥ **40%**. A tela distingue dois c
 | Candidatos existem mas nenhum alcança 40% | "Nenhum candidato alcança o mínimo de 40% de score." |
 
 Penalizações aplicadas no score:
-- **-30% por requisito obrigatório ausente**
+- **-40% por requisito obrigatório ausente**
 - **-10% se o candidato não é da cidade da vaga**
 
 ---
