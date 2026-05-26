@@ -8,7 +8,6 @@ Stack: **React · TypeScript · Vite · Material UI · TanStack Query**
 ## Pré-requisitos
 
 - Node.js 18+ → [nodejs.org](https://nodejs.org)
-- npm — já vem com o Node
 - Backend rodando em `http://localhost:8000`
 
 ---
@@ -19,16 +18,20 @@ Stack: **React · TypeScript · Vite · Material UI · TanStack Query**
 cd bbts-vacancy-management-frontend/bbts-vagas
 npm install
 npx msw init public/ --save
+
 ```
 
 Crie o `.env`:
+
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_USE_MOCK=false
+
 ```
 
 ```bash
 npm run dev
+
 ```
 
 Acesse: **http://localhost:5173**
@@ -38,7 +41,7 @@ Acesse: **http://localhost:5173**
 ## Variáveis de ambiente
 
 | Variável | Descrição |
-|----------|-----------|
+| --- | --- |
 | `VITE_API_URL` | URL do backend (ex: `http://localhost:8000`) |
 | `VITE_USE_MOCK` | `true` para usar MSW sem backend |
 
@@ -46,42 +49,30 @@ Acesse: **http://localhost:5173**
 
 ## Estrutura de pastas
 
-```
+```text
 src/
 ├── app/
-│   ├── App.tsx
-│   ├── router.tsx           # Rotas + guards de autenticação por role
-│   ├── providers.tsx
-│   ├── queryClient.ts
+│   ├── router.tsx           # Rotas + guards por role
 │   └── theme.ts
 ├── features/
 │   ├── auth/
 │   │   ├── LoginPage.tsx    # Login + Cadastro (toggle) com email/senha
-│   │   └── authContext.tsx  # Contexto de autenticação + token
+│   │   └── authContext.tsx
 │   ├── vacancies/
 │   │   ├── VacanciesListPage.tsx
 │   │   ├── VacancyCreatePage.tsx
 │   │   ├── VacancyDetailsPage.tsx
-│   │   ├── components/
-│   │   │   ├── RequirementsField.tsx
-│   │   │   └── VacancyStatusChip.tsx
 │   │   └── hooks/
-│   │       ├── useVacancies.ts
-│   │       ├── useVacancy.ts
-│   │       ├── useCreateVacancy.ts
-│   │       └── useSubmitVacancy.ts
 │   ├── approvals/
 │   │   ├── ApprovalsQueuePage.tsx
 │   │   └── hooks/
-│   │       ├── usePendingApprovals.ts
-│   │       ├── useApproveVacancy.ts
-│   │       └── useRejectVacancy.ts
 │   ├── candidates/
-│   │   ├── CandidatesByVacancyPage.tsx  # Ranking filtrado por score mínimo + Atualizar Ranking
+│   │   ├── CandidatesByVacancyPage.tsx  # Ranking + Recusar candidato + seção de recusados
 │   │   ├── CandidatesListPage.tsx
 │   │   ├── CandidateDetailPage.tsx
 │   │   └── hooks/
-│   │       ├── useCandidatesByVacancy.ts  # Retorna candidates, totalBeforeFilter e scoreThreshold
+│   │       ├── useCandidatesByVacancy.ts  # Retorna candidates, rejected, totalBeforeFilter, scoreThreshold
+│   │       ├── useRejectCandidate.ts      # Recusa manual com justificativa
 │   │       ├── useRescoreVacancy.ts
 │   │       ├── useCandidates.ts
 │   │       └── useCandidateDetail.ts
@@ -91,13 +82,13 @@ src/
 │       └── useImportCandidates.ts
 ├── shared/
 │   ├── api/
-│   │   ├── http.ts          # Cliente HTTP + toCamel + auth header
-│   │   └── endpoints.ts     # Todas as URLs da API
-│   ├── types/index.ts       # Todos os tipos TypeScript do domínio
+│   │   ├── http.ts
+│   │   └── endpoints.ts     # inclui REJECT_CANDIDATE
+│   ├── types/index.ts       # CandidateStatus · CandidateListByVacancy · campos de rejeição
 │   ├── components/
-│   ├── layouts/             # AppShell, SideNav, TopBar
-│   └── utils/
+│   └── layouts/
 └── mocks/
+
 ```
 
 ---
@@ -105,44 +96,48 @@ src/
 ## Telas disponíveis
 
 | Rota | Tela | Role |
-|------|------|------|
+| --- | --- | --- |
 | `/login` | Login + Cadastro | Público |
 | `/vacancies` | Lista de vagas | REQUESTER (só suas) / RH (todas) |
-| `/vacancies/new` | Criar nova vaga | REQUESTER |
-| `/vacancies/:id` | Detalhe + submeter para aprovação | Autenticado |
-| `/vacancies/:id/candidates` | Ranking filtrado por score mínimo + Atualizar Ranking | Autenticado |
-| `/candidates` | Base de candidatos com filtros por skill e localização | Autenticado |
-| `/candidates/:id` | Perfil completo do candidato | Autenticado |
+| `/vacancies/new` | Criar vaga | REQUESTER |
+| `/vacancies/:id` | Detalhe + submeter | Autenticado |
+| `/vacancies/:id/candidates` | Ranking + Recusar candidatos + seção de recusados | Autenticado |
+| `/candidates` | Base de candidatos + filtros | Autenticado |
+| `/candidates/:id` | Perfil completo | Autenticado |
 | `/approvals` | Fila de aprovação | RH |
-| `/candidates/import` | Importar via PDF (IA), CSV ou JSON | RH |
+| `/candidates/import` | Import PDF / CSV / JSON | RH |
 
 ---
 
 ## Autenticação
 
-A tela `/login` tem dois modos alternáveis:
+A tela `/login` alterna entre dois modos:
 
-**Login** — e-mail + senha  
-**Cadastro** — nome, e-mail, senha e seleção de perfil (Solicitante ou RH)
+**Login** — e-mail + senha
 
-Após autenticar, o token JWT é salvo no `sessionStorage` e enviado automaticamente em todas as requisições.
+**Cadastro** — nome, e-mail, senha e perfil (Solicitante ou RH)
 
 ---
 
-## Ranking de candidatos
+## Ranking e rejeição de candidatos
 
-O score é calculado automaticamente quando uma vaga é aprovada pelo RH. Se novos candidatos forem importados após a aprovação, clique em **Atualizar Ranking** na tela de candidatos da vaga para recalcular.
+O ranking exibe apenas candidatos com score ≥ **40%**. O RH pode recusar candidatos manualmente clicando em **Recusar** na tabela e preenchendo a justificativa obrigatória.
 
-O ranking exibe apenas candidatos com score ≥ **40%**. A tela distingue dois cenários:
+Candidatos abaixo de 40% são automaticamente recusados pelo sistema ao aprovar ou atualizar o ranking.
+
+Os candidatos recusados (automático ou manual) aparecem numa seção separada abaixo do ranking, com o motivo da recusa exibido.
+
+A tela distingue dois cenários de lista vazia:
 
 | Situação | Mensagem exibida |
-|---|---|
-| Vaga sem candidatos cadastrados | "Nenhum candidato encontrado para esta vaga." |
-| Candidatos existem mas nenhum alcança 40% | "Nenhum candidato alcança o mínimo de 40% de score." |
+| --- | --- |
+| Vaga sem candidatos cadastrados | “Nenhum candidato encontrado para esta vaga.” |
+| Candidatos existem mas nenhum alcança 40% | “Nenhum candidato alcança o mínimo de 40% de score.” |
 
-Penalizações aplicadas no score:
-- **-40% por requisito obrigatório ausente**
-- **-10% se o candidato não é da cidade da vaga**
+Penalizações no score:
+
+* **-30% por requisito obrigatório ausente**
+* **-10% se o candidato não é da cidade da vaga**
 
 ---
 
@@ -150,15 +145,14 @@ Penalizações aplicadas no score:
 
 1. RH acessa `/candidates/import` → aba **PDF (IA)**
 2. Faz upload do currículo `.pdf`
-3. O backend envia para o **Groq (LLaMA 3.3 70B)**
-4. A IA extrai: nome, skills, experiências, formação, idiomas, certificações
-5. Dados são normalizados (sinônimos) e salvos no banco
-6. Candidato aparece no ranking ao clicar em **Atualizar Ranking**
+3. O Groq (LLaMA 3.3 70B) extrai: nome, skills, experiências, formação, idiomas, certificações
+4. Dados normalizados e salvos no banco
+5. Candidato aparece no ranking ao clicar em **Atualizar Ranking**
 
 ---
 
 ## Próximas sprints
 
-- [ ] Sprint 4: Dashboard com KPIs por vaga (total candidatos, score médio, gaps)
-- [ ] Sprint 4: Role MANAGER com visão de área
-- [ ] Sprint 5: Exportação de ranking para CSV
+* [ ] Sprint 5: Dashboard com KPIs por vaga, role MANAGER
+* [ ] Sprint 6: Exportação de ranking para CSV
+* [ ] Sprint 7: Ranking explicativo por IA
