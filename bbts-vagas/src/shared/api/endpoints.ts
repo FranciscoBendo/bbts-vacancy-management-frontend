@@ -10,6 +10,7 @@ export const ENDPOINTS = {
   APPROVE: (id: string) => `/approvals/${id}/approve`,
   REJECT: (id: string) => `/approvals/${id}/reject`,
   CANDIDATES: (vacancyId: string) => `/vacancies/${vacancyId}/candidates`,
+  REJECT_CANDIDATE: (vacancyId: string, suggestionId: string) => `/vacancies/${vacancyId}/candidates/${suggestionId}/reject`,
   CANDIDATES_LIST: '/candidates',
   CANDIDATE_DETAIL: (id: string) => `/candidates/${id}`,
   IMPORT_JSON: '/candidates/import/json',
