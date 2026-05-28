@@ -150,6 +150,11 @@ export default function CandidatesByVacancyPage() {
             </Typography>
           </Box>
         ) : (
+          <>
+            <Alert severity="info" sx={{ m: 2, mb: 1 }}>
+              Exibindo apenas candidatos com score ≥ <strong>{scoreThreshold}%</strong>.
+              {rejected.length > 0 && ` ${rejected.length} candidato(s) foram recusados ou não atingiram o mínimo.`}
+            </Alert>
           <Table>
             <TableHead>
               <TableRow>
@@ -199,6 +204,7 @@ export default function CandidatesByVacancyPage() {
               ))}
             </TableBody>
           </Table>
+          </>
         )}
       </AppSection>
 
