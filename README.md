@@ -18,7 +18,6 @@ Stack: **React · TypeScript · Vite · Material UI · TanStack Query**
 cd bbts-vacancy-management-frontend/bbts-vagas
 npm install
 npx msw init public/ --save
-
 ```
 
 Crie o `.env`:
@@ -26,12 +25,10 @@ Crie o `.env`:
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_USE_MOCK=false
-
 ```
 
 ```bash
 npm run dev
-
 ```
 
 Acesse: **http://localhost:5173**
@@ -77,18 +74,17 @@ src/
 │   │       ├── useCandidates.ts
 │   │       └── useCandidateDetail.ts
 │   └── imports/
-│       ├── ImportCandidatesPage.tsx     # PDF (IA) + CSV + JSON
-│       ├── useImportPdf.ts
+│       ├── ImportCandidatesPage.tsx     # PDF (IA) + CSV + JSON · dialog de resolução de duplicatas
+│       ├── useImportPdf.ts              # useImportPdf · useResolveDuplicate
 │       └── useImportCandidates.ts
 ├── shared/
 │   ├── api/
 │   │   ├── http.ts
-│   │   └── endpoints.ts     # inclui REJECT_CANDIDATE
-│   ├── types/index.ts       # CandidateStatus · CandidateListByVacancy · campos de rejeição
+│   │   └── endpoints.ts     # inclui REJECT_CANDIDATE · RESOLVE_DUPLICATE
+│   ├── types/index.ts       # CandidateStatus · CandidateListByVacancy · DuplicateDetected
 │   ├── components/
 │   └── layouts/
 └── mocks/
-
 ```
 
 ---
@@ -105,7 +101,7 @@ src/
 | `/candidates` | Base de candidatos + filtros | Autenticado |
 | `/candidates/:id` | Perfil completo | Autenticado |
 | `/approvals` | Fila de aprovação | RH |
-| `/candidates/import` | Import PDF / CSV / JSON | RH |
+| `/candidates/import` | Import PDF / CSV / JSON · resolução de duplicatas | RH |
 
 ---
 
@@ -131,28 +127,37 @@ A tela distingue dois cenários de lista vazia:
 
 | Situação | Mensagem exibida |
 | --- | --- |
-| Vaga sem candidatos cadastrados | “Nenhum candidato encontrado para esta vaga.” |
-| Candidatos existem mas nenhum alcança 40% | “Nenhum candidato alcança o mínimo de 40% de score.” |
+| Vaga sem candidatos cadastrados | "Nenhum candidato encontrado para esta vaga." |
+| Candidatos existem mas nenhum alcança 40% | "Nenhum candidato alcança o mínimo de 40% de score." |
 
 Penalizações no score:
 
-* **-30% por requisito obrigatório ausente**
-* **-10% se o candidato não é da cidade da vaga**
+- **-30% por requisito obrigatório ausente**
+- **-10% se o candidato não é da cidade da vaga**
 
 ---
 
-## Importação de currículos via IA
+## Importação de currículos via IA e detecção de duplicatas
 
 1. RH acessa `/candidates/import` → aba **PDF (IA)**
 2. Faz upload do currículo `.pdf`
 3. O Groq (LLaMA 3.3 70B) extrai: nome, skills, experiências, formação, idiomas, certificações
-4. Dados normalizados e salvos no banco
-5. Candidato aparece no ranking ao clicar em **Atualizar Ranking**
+4. O backend verifica se o e-mail extraído já está cadastrado no banco
+5. **Sem duplicata:** dados normalizados e salvos — card de sucesso exibido com botão "Ver perfil completo"
+6. **Com duplicata:** alerta exibido identificando o candidato existente com três opções:
+
+| Opção | Comportamento |
+| --- | --- |
+| Atualizar cadastro existente | Sobrescreve os dados do candidato já cadastrado com os do novo PDF |
+| Importar como candidato novo | Cria um novo registro sem e-mail para evitar conflito |
+| Cancelar importação | Fecha o alerta sem persistir nada |
+
+7. Candidato aparece no ranking ao clicar em **Atualizar Ranking**
 
 ---
 
 ## Próximas sprints
 
-* [ ] Sprint 5: Dashboard com KPIs por vaga, role MANAGER
-* [ ] Sprint 6: Exportação de ranking para CSV
-* [ ] Sprint 7: Ranking explicativo por IA
+- [ ] Sprint 5: Dashboard com KPIs por vaga, role MANAGER
+- [ ] Sprint 6: Exportação de ranking para CSV
+- [ ] Sprint 7: Ranking explicativo por IA
