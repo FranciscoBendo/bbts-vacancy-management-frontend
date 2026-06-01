@@ -13,6 +13,7 @@ const CandidatesByVacancyPage = lazy(() => import('../features/candidates/Candid
 const CandidatesListPage      = lazy(() => import('../features/candidates/CandidatesListPage'));
 const CandidateDetailPage     = lazy(() => import('../features/candidates/CandidateDetailPage'));
 const ImportCandidatesPage    = lazy(() => import('../features/imports/ImportCandidatesPage'));
+const DashboardPage           = lazy(() => import('../features/dashboard/DashboardPage'));
 
 const Loading = () => <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
 const S = (C: React.ComponentType) => <Suspense fallback={<Loading />}><C /></Suspense>;
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
       { path: 'vacancies/:id/candidates', element: S(CandidatesByVacancyPage) },
       { path: 'candidates', element: S(CandidatesListPage) },
       { path: 'candidates/:id', element: S(CandidateDetailPage) },
+      { path: 'dashboard', element: S(DashboardPage) },
     ]},
     { element: <PrivateRoute allowedRoles={['REQUESTER']} />, children: [
       { path: 'vacancies/new', element: S(VacancyCreatePage) },

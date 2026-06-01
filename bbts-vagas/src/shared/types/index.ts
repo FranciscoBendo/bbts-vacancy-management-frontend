@@ -47,3 +47,17 @@ export interface CandidateDetail { id: string; fullName: string; headline: strin
 export type IntegrationStatus = 'SUCCESS' | 'PARTIAL' | 'FAILED';
 export interface IntegrationLog { id: string; source: string; filename?: string; status: IntegrationStatus; totalRecords: number; successCount: number; errorCount: number; errorsJson?: Array<{ row: number; message: string }>; }
 export interface CandidateListItem { id: string; fullName: string; headline: string; location: string; email?: string; skillsSummary: string[]; createdAt: string; }
+
+export interface DashboardData {
+  totalVacancies: number;
+  vacanciesByStatus: {
+    draft: number;
+    pendingApproval: number;
+    approved: number;
+    rejected: number;
+  };
+  totalCandidates: number;
+  totalSuggestions: number;
+  averageScore: number;
+  totalRejectedCandidates: number;
+}

@@ -17,6 +17,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/authContext';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 const DRAWER_WIDTH = 240;
 
@@ -30,6 +31,7 @@ const REQUESTER_ITEMS: NavItem[] = [
   { label: 'Minhas Vagas', path: '/vacancies', icon: <WorkIcon /> },
   { label: 'Candidatos', path: '/candidates', icon: <PeopleIcon /> },
   { label: 'Criar Vaga', path: '/vacancies/new', icon: <AddCircleOutlineIcon /> },
+  { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
 ];
 
 const RH_ITEMS: NavItem[] = [
@@ -37,6 +39,7 @@ const RH_ITEMS: NavItem[] = [
   { label: 'Todas as Vagas', path: '/vacancies', icon: <WorkIcon /> },
   { label: 'Candidatos', path: '/candidates', icon: <PeopleIcon /> },
   { label: 'Importar Candidatos', path: '/candidates/import', icon: <UploadFileIcon /> },
+  { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
 ];
 
 export function SideNav({ open }: { open: boolean }) {
