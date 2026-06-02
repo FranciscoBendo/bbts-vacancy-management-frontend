@@ -1,6 +1,6 @@
 # BBTS — Gestão de Vagas · Frontend
 
-Interface web para gestão de vagas, aprovação RH, importação de currículos via IA e ranking de candidatos.  
+Interface web para gestão de vagas, aprovação RH, importação de currículos via IA, ranking de candidatos e dashboard.  
 Stack: **React · TypeScript · Vite · Material UI · TanStack Query**
 
 ---
@@ -18,6 +18,7 @@ Stack: **React · TypeScript · Vite · Material UI · TanStack Query**
 cd bbts-vacancy-management-frontend/bbts-vagas
 npm install
 npx msw init public/ --save
+
 ```
 
 Crie o `.env`:
@@ -25,10 +26,12 @@ Crie o `.env`:
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_USE_MOCK=false
+
 ```
 
 ```bash
 npm run dev
+
 ```
 
 Acesse: **http://localhost:5173**
@@ -55,6 +58,9 @@ src/
 │   ├── auth/
 │   │   ├── LoginPage.tsx    # Login + Cadastro (toggle) com email/senha
 │   │   └── authContext.tsx
+│   ├── dashboard/
+│   │   ├── DashboardPage.tsx # KPIs + vagas por status + resumo geral
+│   │   └── useDashboard.ts
 │   ├── vacancies/
 │   │   ├── VacanciesListPage.tsx
 │   │   ├── VacancyCreatePage.tsx
@@ -85,6 +91,7 @@ src/
 │   ├── components/
 │   └── layouts/
 └── mocks/
+
 ```
 
 ---
@@ -94,6 +101,7 @@ src/
 | Rota | Tela | Role |
 | --- | --- | --- |
 | `/login` | Login + Cadastro | Público |
+| `/dashboard` | KPIs e visão consolidada | Autenticado |
 | `/vacancies` | Lista de vagas | REQUESTER (só suas) / RH (todas) |
 | `/vacancies/new` | Criar vaga | REQUESTER |
 | `/vacancies/:id` | Detalhe + submeter | Autenticado |
@@ -102,6 +110,18 @@ src/
 | `/candidates/:id` | Perfil completo | Autenticado |
 | `/approvals` | Fila de aprovação | RH |
 | `/candidates/import` | Import PDF / CSV / JSON · resolução de duplicatas | RH |
+
+---
+
+## Dashboard
+
+A tela `/dashboard` exibe:
+
+* **KPIs principais:** total de vagas, candidatos cadastrados, score médio e candidatos recusados.
+* **Vagas por status:** barras proporcionais mostrando distribuição entre Draft, Aguardando, Aprovadas e Recusadas.
+* **Resumo geral:** visão consolidada com os números mais relevantes do sistema.
+
+> **Nota:** Os candidatos recusados incluem tanto os recusados automaticamente (score < 40%) quanto os recusados manualmente pelo RH.
 
 ---
 
@@ -132,8 +152,8 @@ A tela distingue dois cenários de lista vazia:
 
 Penalizações no score:
 
-- **-30% por requisito obrigatório ausente**
-- **-10% se o candidato não é da cidade da vaga**
+* **-30% por requisito obrigatório ausente**
+* **-10% se o candidato não é da cidade da vaga**
 
 ---
 
@@ -158,6 +178,6 @@ Penalizações no score:
 
 ## Próximas sprints
 
-- [ ] Sprint 5: Dashboard com KPIs por vaga, role MANAGER
-- [ ] Sprint 6: Exportação de ranking para CSV
-- [ ] Sprint 7: Ranking explicativo por IA
+* [ ] Sprint 5: Role MANAGER com visão de área
+* [ ] Sprint 6: Exportação de ranking para CSV
+* [ ] Sprint 7: Ranking explicativo por IA
