@@ -18,4 +18,5 @@ export const ENDPOINTS = {
   IMPORT_CSV: '/candidates/import/csv',
   IMPORT_PDF: '/candidates/import/pdf',
   IMPORT_TEMPLATE: '/candidates/import/template',
+  RESOLVE_DUPLICATE: '/candidates/import/pdf/resolve',
 } as const;

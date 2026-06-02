@@ -48,6 +48,13 @@ export type IntegrationStatus = 'SUCCESS' | 'PARTIAL' | 'FAILED';
 export interface IntegrationLog { id: string; source: string; filename?: string; status: IntegrationStatus; totalRecords: number; successCount: number; errorCount: number; errorsJson?: Array<{ row: number; message: string }>; }
 export interface CandidateListItem { id: string; fullName: string; headline: string; location: string; email?: string; skillsSummary: string[]; createdAt: string; }
 
+export interface DuplicateDetected {
+  duplicateDetected: true;
+  existingCandidateId: number;
+  existingCandidateName: string;
+  extractedData: Record<string, unknown>;
+  filename: string;
+}
 export interface DashboardData {
   totalVacancies: number;
   vacanciesByStatus: {

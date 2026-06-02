@@ -7,13 +7,15 @@ import ErrorIcon from '@mui/icons-material/Error';
 import WarningIcon from '@mui/icons-material/Warning';
 import DownloadIcon from '@mui/icons-material/Download';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // ADICIONADO — ícone do alerta de duplicata
 import { useNavigate } from 'react-router-dom';
 import { AppPage } from '../../shared/components/AppPage';
 import { AppSection } from '../../shared/components/AppSection';
 import { AppButton } from '../../shared/components/AppButton';
-import { useImportPdf } from './useImportPdf';
+import { AppDialog } from '../../shared/components/AppDialog'; // ADICIONADO — dialog de decisão
+import { useImportPdf, useResolveDuplicate } from './useImportPdf'; // MODIFICADO — adicionado useResolveDuplicate
 import { useImportCsv, useImportJson } from './useImportCandidates';
-import type { IntegrationLog, CandidateDetail } from '../../shared/types';
+import type { IntegrationLog, CandidateDetail, DuplicateDetected } from '../../shared/types'; // MODIFICADO — adicionado DuplicateDetected
 import { ENDPOINTS } from '../../shared/api/endpoints';
 
 function StatusChip({ status }: { status: string }) {
@@ -80,9 +82,17 @@ export default function ImportCandidatesPage() {
   const pdfRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
 
+  // ADICIONADO — estado que armazena os dados de duplicata retornados pelo backend.
+  // Quando preenchido, o dialog de decisão é exibido ao RH.
+  // Quando null, o dialog permanece fechado.
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateDetected | null>(null);
+
   const { mutate: importPdf, isPending: pdfLoading } = useImportPdf();
   const { mutate: importCsv, isPending: csvLoading } = useImportCsv();
   const { mutate: importJson, isPending: jsonLoading } = useImportJson();
+
+  // ADICIONADO — hook que envia a decisão do RH para POST /candidates/import/pdf/resolve
+  const { mutate: resolveDuplicate, isPending: resolveLoading } = useResolveDuplicate();
 
   const reset = () => { setImportLog(null); setPdfCandidate(null); };
 
@@ -96,6 +106,33 @@ export default function ImportCandidatesPage() {
     const a = document.createElement('a');
     a.href = url; a.download = 'candidatos_template.csv'; a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // ADICIONADO — função centralizada para lidar com a decisão do RH no dialog.
+  // Recebe a action escolhida, chama o backend e trata sucesso/erro.
+  const handleResolve = (action: 'create_new' | 'update' | 'cancel') => {
+    if (action === 'cancel') {
+      setDuplicateInfo(null);
+      return;
+    }
+    if (!duplicateInfo) return;
+
+    resolveDuplicate(
+      {
+        action,
+        extractedData: duplicateInfo.extractedData,
+        filename: duplicateInfo.filename,
+        existingCandidateId:
+          action === 'update' ? duplicateInfo.existingCandidateId : undefined,
+      },
+      {
+        onSuccess: (candidate) => {
+          setPdfCandidate(candidate);
+          setDuplicateInfo(null); // fecha o dialog após sucesso
+        },
+        onError: (e) => alert(`Erro: ${e.message}`),
+      }
+    );
   };
 
   return (
@@ -124,8 +161,32 @@ export default function ImportCandidatesPage() {
             </Box>
             {pdfLoading && <Box mt={2}><Typography variant="caption" color="text.secondary">Analisando com IA...</Typography><LinearProgress sx={{ mt: 0.5, borderRadius: 1 }} /></Box>}
             <Box display="flex" justifyContent="flex-end" mt={2}>
-              <AppButton variant="contained" loading={pdfLoading} disabled={!pdfFile} startIcon={<AutoAwesomeIcon />}
-                onClick={() => pdfFile && importPdf(pdfFile, { onSuccess: (c) => { setPdfCandidate(c); setPdfFile(null); }, onError: (e) => alert(`Erro: ${e.message}`) })}>
+              <AppButton
+                variant="contained"
+                loading={pdfLoading}
+                disabled={!pdfFile}
+                startIcon={<AutoAwesomeIcon />}
+                onClick={() =>
+                  pdfFile &&
+                  importPdf(pdfFile, {
+                    // MODIFICADO — onSuccess agora verifica se o retorno é duplicata
+                    // ANTES: sempre tratava o resultado como CandidateDetail e exibia o card de sucesso
+                    // DEPOIS: verifica 'duplicateDetected' antes de decidir o que renderizar
+                    onSuccess: (result) => {
+                      if ('duplicateDetected' in result && result.duplicateDetected) {
+                        // Duplicata detectada — abre o dialog de decisão com os dados retornados
+                        setDuplicateInfo(result as DuplicateDetected);
+                        setPdfFile(null);
+                      } else {
+                        // Fluxo normal — exibe o card de sucesso com o perfil do candidato
+                        setPdfCandidate(result as CandidateDetail);
+                        setPdfFile(null);
+                      }
+                    },
+                    onError: (e) => alert(`Erro: ${e.message}`),
+                  })
+                }
+              >
                 Extrair com IA
               </AppButton>
             </Box>
@@ -177,6 +238,59 @@ export default function ImportCandidatesPage() {
 João Silva,Dev Backend,joao@email.com,São Paulo SP,Python:Avançado:5;JS:Inter:2,Inglês:B2,AWS:Amazon:2023,USP:CC:Bach:2018,BBTS:Dev:2022:2024:false`}
         </Box>
       </AppSection>
+
+      {/* ADICIONADO — dialog de decisão exibido quando o backend detecta e-mail duplicado.
+          O RH escolhe entre três opções:
+          - "Atualizar cadastro existente": sobrescreve os dados do candidato já cadastrado
+          - "Importar como candidato novo": cria novo registro sem e-mail (evita conflito UNIQUE)
+          - "Cancelar importação": fecha o dialog sem persistir nada
+          O onClose é bloqueado durante a requisição para evitar fechamento acidental. */}
+      <AppDialog
+        open={!!duplicateInfo}
+        onClose={() => !resolveLoading && setDuplicateInfo(null)}
+        title="Candidato já cadastrado"
+        maxWidth="sm"
+        actions={
+          <AppButton
+            variant="outlined"
+            color="error"
+            onClick={() => handleResolve('cancel')}
+            disabled={resolveLoading}
+          >
+            Cancelar importação
+          </AppButton>
+        }
+      >
+        {duplicateInfo && (
+          <Box>
+            <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ mb: 3 }}>
+              O e-mail deste currículo já pertence ao candidato{' '}
+              <strong>{duplicateInfo.existingCandidateName}</strong>.
+              O que deseja fazer?
+            </Alert>
+
+            <Box display="flex" flexDirection="column" gap={1.5}>
+              <AppButton
+                variant="contained"
+                color="primary"
+                loading={resolveLoading}
+                onClick={() => handleResolve('update')}
+              >
+                Atualizar cadastro existente
+              </AppButton>
+
+              <AppButton
+                variant="outlined"
+                loading={resolveLoading}
+                onClick={() => handleResolve('create_new')}
+              >
+                Importar como candidato novo
+              </AppButton>
+            </Box>
+          </Box>
+        )}
+      </AppDialog>
+
     </AppPage>
   );
 }
