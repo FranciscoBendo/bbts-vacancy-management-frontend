@@ -55,3 +55,16 @@ export interface DuplicateDetected {
   extractedData: Record<string, unknown>;
   filename: string;
 }
+export interface DashboardData {
+  totalVacancies: number;
+  vacanciesByStatus: {
+    draft: number;
+    pendingApproval: number;
+    approved: number;
+    rejected: number;
+  };
+  totalCandidates: number;
+  totalSuggestions: number;
+  averageScore: number;
+  totalRejectedCandidates: number;
+}

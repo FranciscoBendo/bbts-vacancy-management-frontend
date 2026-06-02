@@ -1,4 +1,5 @@
 export const ENDPOINTS = {
+  DASHBOARD: '/vacancies/dashboard',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   ME: '/auth/me',
