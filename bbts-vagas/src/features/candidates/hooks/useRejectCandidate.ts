@@ -12,6 +12,7 @@ export function useRejectCandidate() {
       http.post(ENDPOINTS.REJECT_CANDIDATE(vacancyId, suggestionId), { reason }),
     onSuccess: (_, { vacancyId }) => {
       qc.invalidateQueries({ queryKey: ['candidates', vacancyId] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
