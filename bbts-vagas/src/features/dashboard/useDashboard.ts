@@ -7,5 +7,6 @@ export function useDashboard() {
   return useQuery<DashboardData>({
     queryKey: ['dashboard'],
     queryFn: () => http.get(ENDPOINTS.DASHBOARD),
+    staleTime: 0,
   });
 }
