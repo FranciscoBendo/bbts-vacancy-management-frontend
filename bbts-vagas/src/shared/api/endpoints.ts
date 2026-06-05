@@ -19,4 +19,5 @@ export const ENDPOINTS = {
   IMPORT_PDF: '/candidates/import/pdf',
   IMPORT_TEMPLATE: '/candidates/import/template',
   RESOLVE_DUPLICATE: '/candidates/import/pdf/resolve',
+  IMPORT_EXTERNAL: (vacancyId: string) => `/vacancies/${vacancyId}/import-external`,
 } as const;
