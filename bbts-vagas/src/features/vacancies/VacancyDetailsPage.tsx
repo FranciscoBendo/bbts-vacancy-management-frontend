@@ -9,6 +9,10 @@ import PeopleIcon from '@mui/icons-material/People';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import { useState } from 'react';
+import { Snackbar } from '@mui/material';
+import { useImportExternal } from '../imports/useImportExternal';
 import { useVacancy } from './hooks/useVacancy';
 import { useSubmitVacancy } from './hooks/useSubmitVacancy';
 import { VacancyStatusChip } from './components/VacancyStatusChip';
@@ -32,6 +36,8 @@ export default function VacancyDetailsPage() {
   const { user } = useAuth();
   const { data: vacancy, isLoading, isError } = useVacancy(id!);
   const { mutate: submit, isPending: isSubmitting } = useSubmitVacancy(id!);
+  const { mutate: importExternal, isPending: isImporting } = useImportExternal(id!);
+  const [snackMsg, setSnackMsg] = useState('');
 
   if (isLoading) {
     return (
@@ -85,7 +91,30 @@ export default function VacancyDetailsPage() {
               Ver Candidatos
             </AppButton>
           )}
-        </Box>
+          {canViewCandidates && (
+            <AppButton
+              variant="outlined"
+              color="info"
+              startIcon={<CloudDownloadIcon />}
+              loading={isImporting}
+              onClick={() =>
+                importExternal(10, {
+                onSuccess: (res) => setSnackMsg(res.message),
+                onError: (e) => setSnackMsg(`Erro: ${e.message}`),
+                })
+              }
+            >
+              Buscar Candidatos Externos
+            </AppButton>
+            )}
+            <Snackbar
+                open={!!snackMsg}
+                autoHideDuration={4000}
+                onClose={() => setSnackMsg('')}
+                message={snackMsg}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            />
+        </Box> 
       }
     >
       {vacancy.status === 'REJECTED' && (
