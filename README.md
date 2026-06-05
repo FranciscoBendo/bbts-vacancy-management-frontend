@@ -48,42 +48,43 @@ Acesse: **http://localhost:5173**
 ```
 src/
 ├── app/
-│   ├── router.tsx           # Rotas + guards por role
+│   ├── router.tsx
 │   └── theme.ts
 ├── features/
 │   ├── auth/
-│   │   ├── LoginPage.tsx    # Login + Cadastro (toggle) com email/senha
+│   │   ├── LoginPage.tsx        # Login + Cadastro com email/senha
 │   │   └── authContext.tsx
 │   ├── dashboard/
-│   │   ├── DashboardPage.tsx # KPIs + vagas por status + resumo geral
+│   │   ├── DashboardPage.tsx    # KPIs + vagas por status + resumo geral
 │   │   └── useDashboard.ts
 │   ├── vacancies/
 │   │   ├── VacanciesListPage.tsx
 │   │   ├── VacancyCreatePage.tsx
-│   │   ├── VacancyDetailsPage.tsx  # + botão "Buscar Candidatos Externos"
+│   │   ├── VacancyDetailsPage.tsx  # botão "Buscar Candidatos Externos"
 │   │   └── hooks/
 │   ├── approvals/
 │   │   ├── ApprovalsQueuePage.tsx
 │   │   └── hooks/
 │   ├── candidates/
-│   │   ├── CandidatesByVacancyPage.tsx  # Ranking + aviso score ≥ 40% + Recusar + seção recusados
+│   │   ├── CandidatesByVacancyPage.tsx  # Ranking + aviso score ≥ 40% + Recusar + recusados
 │   │   ├── CandidatesListPage.tsx
-│   │   ├── CandidateDetailPage.tsx
+│   │   ├── CandidateDetailPage.tsx      # botão "Remover dados (LGPD)" para RH
 │   │   └── hooks/
 │   │       ├── useCandidatesByVacancy.ts
 │   │       ├── useRejectCandidate.ts
 │   │       ├── useRescoreVacancy.ts
 │   │       ├── useCandidates.ts
-│   │       └── useCandidateDetail.ts
+│   │       ├── useCandidateDetail.ts
+│   │       └── useAnonymizeCandidate.ts  # anonimização LGPD
 │   └── imports/
-│       ├── ImportCandidatesPage.tsx     # PDF (IA) + CSV + JSON · resolução de duplicatas
+│       ├── ImportCandidatesPage.tsx      # PDF (IA) + CSV + JSON · aviso LGPD · duplicatas
 │       ├── useImportPdf.ts
-│       ├── useImportExternal.ts         # Conector externo (randomuser.me)
+│       ├── useImportExternal.ts
 │       └── useImportCandidates.ts
 ├── shared/
 │   ├── api/
 │   │   ├── http.ts
-│   │   └── endpoints.ts     # inclui REJECT_CANDIDATE · IMPORT_EXTERNAL
+│   │   └── endpoints.ts     # inclui REJECT_CANDIDATE · IMPORT_EXTERNAL · ANONYMIZE_CANDIDATE
 │   ├── types/index.ts
 │   ├── components/
 │   └── layouts/
@@ -101,51 +102,53 @@ src/
 | `/vacancies` | Lista de vagas | REQUESTER (só suas) / RH (todas) |
 | `/vacancies/new` | Criar vaga | REQUESTER |
 | `/vacancies/:id` | Detalhe + submeter + buscar candidatos externos | Autenticado |
-| `/vacancies/:id/candidates` | Ranking + Recusar candidatos + seção de recusados | Autenticado |
+| `/vacancies/:id/candidates` | Ranking + Recusar + seção de recusados | Autenticado |
 | `/candidates` | Base de candidatos + filtros | Autenticado |
-| `/candidates/:id` | Perfil completo | Autenticado |
+| `/candidates/:id` | Perfil completo + remover dados (LGPD) | Autenticado |
 | `/approvals` | Fila de aprovação | RH |
-| `/candidates/import` | Import PDF / CSV / JSON · resolução de duplicatas | RH |
+| `/candidates/import` | Import PDF / CSV / JSON · aviso LGPD · duplicatas | RH |
+
+---
+
+## LGPD — Lei Geral de Proteção de Dados
+
+O sistema implementa dois mecanismos de conformidade com a Lei 13.709/2018:
+
+### Aviso de coleta na importação
+Na tela `/candidates/import`, aba **PDF (IA)**, um banner amarelo informa ao RH que o candidato deve ter sido comunicado sobre o tratamento dos seus dados pessoais antes da importação.
+
+### Remoção de dados pessoais
+Na tela `/candidates/:id`, o botão **"Remover dados (LGPD)"** (visível apenas para RH) abre um dialog de confirmação explicando o que será removido. Após confirmar:
+
+- Nome substituído por `Candidato Removido #ID`
+- E-mail, LinkedIn e localização removidos
+- Skills, experiências, formação, idiomas e certificações excluídos
+- Histórico de scores mantido de forma anonimizada
+- Ação registrada no log de auditoria do backend
 
 ---
 
 ## Dashboard
 
-A tela `/dashboard` exibe:
-
-- **KPIs principais:** total de vagas, candidatos cadastrados, score médio e candidatos recusados
-- **Vagas por status:** barras proporcionais mostrando distribuição entre Draft, Aguardando, Aprovadas e Recusadas
-- **Resumo geral:** visão consolidada com os números mais relevantes do sistema
-
-Os candidatos recusados incluem tanto os recusados automaticamente (score < 40%) quanto os recusados manualmente pelo RH.
+A tela `/dashboard` exibe KPIs principais, distribuição de vagas por status e resumo geral. Os candidatos recusados incluem tanto os recusados automaticamente (score < 40%) quanto os recusados manualmente pelo RH.
 
 ---
 
 ## Conector Externo
 
-Na tela de detalhe de uma vaga aprovada, o botão **"Buscar Candidatos Externos"** aciona `POST /vacancies/:id/import-external`, que busca perfis via **randomuser.me**, enriquece com skills baseadas nos requisitos da vaga e recalcula o ranking automaticamente. Um Snackbar confirma o resultado da operação.
+Na tela de detalhe de uma vaga aprovada, o botão **"Buscar Candidatos Externos"** busca perfis via randomuser.me, enriquece com skills dos requisitos da vaga e recalcula o ranking automaticamente.
 
 ---
 
 ## Autenticação
 
-A tela `/login` alterna entre dois modos:
-
-**Login** — e-mail + senha  
-**Cadastro** — nome, e-mail, senha e perfil (Solicitante ou RH)
+A tela `/login` alterna entre **Login** (e-mail + senha) e **Cadastro** (nome, e-mail, senha e perfil).
 
 ---
 
 ## Ranking e rejeição de candidatos
 
-O ranking exibe apenas candidatos com score ≥ **40%**, com aviso informativo no topo. O RH pode recusar candidatos manualmente clicando em **Recusar** e preenchendo a justificativa obrigatória. Rejeições manuais são preservadas ao atualizar o ranking.
-
-Os candidatos recusados (automático ou manual) aparecem numa seção separada abaixo do ranking, com o motivo da recusa exibido.
-
-| Situação | Mensagem exibida |
-|---|---|
-| Vaga sem candidatos cadastrados | "Nenhum candidato encontrado para esta vaga." |
-| Candidatos existem mas nenhum alcança 40% | "Nenhum candidato alcança o mínimo de 40% de score." |
+O ranking exibe apenas candidatos com score ≥ **40%**, com aviso informativo no topo. O RH pode recusar candidatos manualmente com justificativa obrigatória. Rejeições manuais são preservadas ao atualizar o ranking.
 
 Penalizações no score:
 - **-30% por requisito obrigatório ausente**
@@ -153,19 +156,13 @@ Penalizações no score:
 
 ---
 
-## Importação de currículos via IA e detecção de duplicatas
+## Importação de currículos via IA
 
 1. RH acessa `/candidates/import` → aba **PDF (IA)**
-2. O Groq (LLaMA 3.3 70B) extrai: nome, skills, experiências, formação, idiomas, certificações
-3. O backend verifica se o e-mail já está cadastrado
-4. **Sem duplicata:** candidato salvo, card de sucesso exibido
-5. **Com duplicata:** alerta com três opções:
-
-| Opção | Comportamento |
-|---|---|
-| Atualizar cadastro existente | Sobrescreve os dados do candidato já cadastrado |
-| Importar como candidato novo | Cria novo registro sem e-mail para evitar conflito |
-| Cancelar importação | Fecha o alerta sem persistir nada |
+2. Confirma o aviso de LGPD
+3. O Groq (LLaMA 3.3 70B) extrai os dados do currículo
+4. Se e-mail duplicado: dialog com opção de atualizar, criar novo ou cancelar
+5. Candidato salvo e disponível no ranking após **Atualizar Ranking**
 
 ---
 

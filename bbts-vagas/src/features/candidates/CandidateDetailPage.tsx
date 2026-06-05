@@ -13,12 +13,22 @@ import { useCandidateDetail } from './hooks/useCandidateDetail';
 import { AppPage } from '../../shared/components/AppPage';
 import { AppSection } from '../../shared/components/AppSection';
 import { AppButton } from '../../shared/components/AppButton';
+import { useState } from 'react';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { AppDialog } from '../../shared/components/AppDialog';
+import { useAnonymizeCandidate } from './hooks/useAnonymizeCandidate';
+import { useAuth } from '../auth/authContext';
+
 
 const LEVEL_COLOR: Record<string, 'default'|'info'|'warning'|'success'> = {
   'básico':'default','intermediário':'info','avançado':'success','fluente':'success',
 };
 
 export default function CandidateDetailPage() {
+  const { user } = useAuth();
+  const isRH = user?.role === 'RH';
+  const { mutate: anonymize, isPending: isAnonymizing } = useAnonymizeCandidate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: c, isLoading, isError } = useCandidateDetail(id!);
@@ -28,7 +38,23 @@ export default function CandidateDetailPage() {
 
   return (
     <AppPage title={c.fullName} subtitle={c.headline} breadcrumbs={[{ label: 'Candidatos', href: '/candidates' }, { label: c.fullName }]}
-      actions={<AppButton variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>Voltar</AppButton>}>
+      actions={
+  <Box display="flex" gap={1.5}>
+    <AppButton variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>
+      Voltar
+    </AppButton>
+    {isRH && (
+      <AppButton
+        variant="outlined"
+        color="error"
+        startIcon={<DeleteForeverIcon />}
+        onClick={() => setConfirmOpen(true)}
+      >
+        Remover dados (LGPD)
+      </AppButton>
+    )}
+  </Box>
+}>
       <Box display="flex" gap={3} flexDirection={{ xs:'column', md:'row' }} alignItems="flex-start">
         <Box flex="1" minWidth={0}>
           <AppSection title="Skills">
@@ -92,6 +118,42 @@ export default function CandidateDetailPage() {
           )}
         </Box>
       </Box>
+      <AppDialog
+  open={confirmOpen}
+  onClose={() => setConfirmOpen(false)}
+  title="Remover dados pessoais (LGPD)"
+  maxWidth="sm"
+  actions={
+    <>
+      <AppButton variant="outlined" onClick={() => setConfirmOpen(false)}>
+        Cancelar
+      </AppButton>
+      <AppButton
+        variant="contained"
+        color="error"
+        loading={isAnonymizing}
+        onClick={() =>
+          anonymize(id!, {
+            onSuccess: () => { setConfirmOpen(false); navigate('/candidates'); },
+            onError: (e) => alert(`Erro: ${e.message}`),
+          })
+        }
+      >
+        Confirmar remoção
+      </AppButton>
+    </>
+  }
+>
+  <Alert severity="warning" sx={{ mb: 2 }}>
+    Esta ação é <strong>irreversível</strong>.
+  </Alert>
+  <Typography variant="body2" color="text.secondary">
+    Os dados pessoais de <strong>{c?.fullName}</strong> serão removidos:
+    nome, e-mail, LinkedIn, skills, experiências, formação, idiomas e certificações.
+    O histórico de scores no ranking será mantido de forma anonimizada.
+    A remoção será registrada no log de auditoria.
+  </Typography>
+</AppDialog>
     </AppPage>
   );
 }

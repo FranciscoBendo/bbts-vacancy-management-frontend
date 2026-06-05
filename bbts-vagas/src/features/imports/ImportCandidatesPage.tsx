@@ -17,6 +17,8 @@ import { useImportPdf, useResolveDuplicate } from './useImportPdf'; // MODIFICAD
 import { useImportCsv, useImportJson } from './useImportCandidates';
 import type { IntegrationLog, CandidateDetail, DuplicateDetected } from '../../shared/types'; // MODIFICADO — adicionado DuplicateDetected
 import { ENDPOINTS } from '../../shared/api/endpoints';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+
 
 function StatusChip({ status }: { status: string }) {
   if (status === 'SUCCESS') return <Chip icon={<CheckCircleIcon />} label="Sucesso" color="success" size="small" />;
@@ -153,6 +155,12 @@ export default function ImportCandidatesPage() {
             <Alert severity="info" sx={{ mb: 3 }} icon={<AutoAwesomeIcon />}>
               <strong>Groq.</strong> Faça upload do currículo em PDF — a IA extrai automaticamente nome, skills, experiências, formação, idiomas e certificações.
             </Alert>
+
+            <Alert severity="warning" sx={{ mb: 3 }} icon={<GppMaybeIcon />}>
+              <strong>Aviso LGPD:</strong> Ao importar este currículo, confirmo que o candidato
+              foi informado sobre o tratamento dos seus dados pessoais para fins de recrutamento,
+              conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).
+            </Alert>
             <Box sx={{ border: '2px dashed', borderColor: pdfFile ? 'primary.main' : 'divider', borderRadius: 3, p: 4, textAlign: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }} onClick={() => pdfRef.current?.click()}>
               <PictureAsPdfIcon sx={{ fontSize: 52, color: pdfFile ? 'primary.main' : 'text.disabled', mb: 1 }} />
               <Typography variant="body1" fontWeight={600}>{pdfFile ? pdfFile.name : 'Clique para selecionar o currículo em PDF'}</Typography>
@@ -268,6 +276,7 @@ João Silva,Dev Backend,joao@email.com,São Paulo SP,Python:Avançado:5;JS:Inter
               <strong>{duplicateInfo.existingCandidateName}</strong>.
               O que deseja fazer?
             </Alert>
+
 
             <Box display="flex" flexDirection="column" gap={1.5}>
               <AppButton

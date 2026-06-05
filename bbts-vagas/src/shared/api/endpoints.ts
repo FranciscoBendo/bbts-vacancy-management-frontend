@@ -20,4 +20,5 @@ export const ENDPOINTS = {
   IMPORT_TEMPLATE: '/candidates/import/template',
   RESOLVE_DUPLICATE: '/candidates/import/pdf/resolve',
   IMPORT_EXTERNAL: (vacancyId: string) => `/vacancies/${vacancyId}/import-external`,
+  ANONYMIZE_CANDIDATE: (id: string) => `/candidates/${id}/anonymize`,
 } as const;
